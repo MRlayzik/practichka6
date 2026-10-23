@@ -1,0 +1,49 @@
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+var (
+	mu    sync.Mutex
+	queue = make([]string, 0)
+)
+
+func push(task string) {
+	mu.Lock()
+	defer mu.Unlock()
+	queue = append(queue, task)
+}
+
+func pop() (string, bool) {
+	mu.Lock()
+	defer mu.Unlock()
+	
+	if len(queue) == 0 {
+		return "", false
+	}
+	
+	task := queue[0]
+	queue = queue[1:]
+	return task, true
+}
+
+func main() {
+	var wg sync.WaitGroup
+	wg.Add(2)
+	
+	go func() { defer wg.Done(); push("Задача 1") }()
+	go func() { defer wg.Done(); push("Задача 2") }()
+	
+	wg.Wait()
+	
+	for i := 0; i < 3; i++ {
+		task, ok := pop()
+		if ok {
+			fmt.Println("Взяли в работу:", task)
+		} else {
+			fmt.Println("Очередь пуста")
+		}
+	}
+}
