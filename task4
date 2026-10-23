@@ -1,0 +1,36 @@
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"sync"
+	"time"
+)
+
+var (
+	mu    sync.Mutex
+	votes = make(map[string]int)
+)
+
+func vote(candidate string) {
+	mu.Lock()
+	defer mu.Unlock()
+	votes[candidate]++
+}
+
+func main() {
+	var wg sync.WaitGroup
+	candidates := []string{"Иванов", "Петров", "Сидоров"}
+
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			time.Sleep(time.Millisecond * time.Duration(rand.Intn(10)))
+			vote(candidates[rand.Intn(len(candidates))])
+		}()
+	}
+
+	wg.Wait()
+	fmt.Println("Результаты выборов:", votes)
+}
