@@ -1,0 +1,26 @@
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+var logMu sync.Mutex
+
+func logMessage(message string) {
+	logMu.Lock()
+	defer logMu.Unlock()
+	fmt.Printf("[LOG] %s\n", message)
+}
+
+func main() {
+	var wg sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			logMessage(fmt.Sprintf("Сообщение от горутины %d", id))
+		}(i)
+	}
+	wg.Wait()
+}
