@@ -1,0 +1,38 @@
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+var (
+	mu sync.RWMutex
+	cache = make(map[string]string)
+)
+
+func get(key string) (string, bool) {
+	mu.RLock()
+	defer mu.RUnlock()
+	val, ok := cache[key]
+	return val, ok
+}
+
+func set(key, value string) {
+	mu.Lock()
+	defer mu.Unlock()
+	cache[key] = value
+}
+
+func main() {
+	set("user:1", "Alice")
+	
+	for i := 0; i < 3; i++ {
+		go func(id int) {
+			val, _ := get("user:1")
+			fmt.Printf("Горутина %d прочитала: %s\n", id, val)
+		}(i)
+	}
+	
+	time.Sleep(time.Second)
+}
