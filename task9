@@ -1,0 +1,47 @@
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+type Metrics struct {
+	mu        sync.Mutex
+	Success   int
+	Fail      int
+	TotalTime time.Duration
+}
+
+func (m *Metrics) AddRequest(success bool, duration time.Duration) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if success {
+		m.Success++
+	} else {
+		m.Fail++
+	}
+	m.TotalTime += duration
+}
+
+func (m *Metrics) Report() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	fmt.Printf("Успешных: %d, Ошибок: %d, Общее время: %v\n", m.Success, m.Fail, m.TotalTime)
+}
+
+func main() {
+	metrics := &Metrics{}
+	var wg sync.WaitGroup
+	
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			metrics.AddRequest(i%2 == 0, time.Millisecond*100)
+		}(i)
+	}
+	
+	wg.Wait()
+	metrics.Report()
+}
